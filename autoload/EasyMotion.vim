@@ -471,8 +471,18 @@
 				let search_direction = (a:direction == 1 ? 'b' : '')
 				let search_stopline = line(a:direction == 1 ? 'w0' : 'w$')
 
+				if a:direction == 2 " From the beginning to the end of screen
+					let search_stopline = line('w$')
+					keepjumps call cursor(line('w0'), '0')
+					" The very first searchpos must be performed with the 'c' flag
+					let search_direction = search_direction . 'c'
+				endif
+
 				while 1
 					let pos = searchpos(a:regexp, search_direction, search_stopline)
+
+					" Remove the potential 'c' flag
+					let search_direction = substitute(search_direction, 'c', '', 'g')
 
 					" Reached end of search range
 					if pos == [0, 0]
@@ -503,9 +513,12 @@
 					if a:direction == 1
 						" Backward
 						let shade_hl_re = '\%'. line('w0') .'l\_.*' . shade_hl_pos
-					else
+					elseif a:direction == 0
 						" Forward
 						let shade_hl_re = shade_hl_pos . '\_.*\%'. line('w$') .'l'
+					else
+						" Backward and forward
+						let shade_hl_re = '\%'. line('w0') .'l\_.*\%'. line('w$') .'l'
 					endif
 
 					let shade_hl_id = matchadd(g:EasyMotion_hl_group_shade, shade_hl_re, 0)
